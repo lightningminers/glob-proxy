@@ -51,6 +51,7 @@
 1. 支持restful风格的其他method，如PUT DELETE
 2. 支持从后台提交SOAP
 3. 指定静态资源
+4. 对请求进行缓存的机制
 
 
 
