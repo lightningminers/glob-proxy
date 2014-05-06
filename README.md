@@ -7,8 +7,7 @@
 
 	npm install glob-proxy
 ## Use
-'''javascript
-	
+
 	var glob = require('glob-proxy');
 	glob.Config({
 	'PORT':'8084',
@@ -20,12 +19,12 @@
 			'/github':'/index.json',
 			'/django':'http://restapi.cruises/CruiseService.svc/GetBookingInfo'
 		}
-	},
+	}
 	'MOCK':false,
 	'TYPE':'HTTP',
 	'ROOT':'D:\\Github'
 	});
-'''
+
 ## Config
 
 >
