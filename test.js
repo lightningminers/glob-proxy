@@ -4,17 +4,16 @@ glob.Config({
 	'PORT':'8084',
 	'REQUEST':{
 		'GET':{
-			'/github':'/index.json'
+			'/github':'/mock.json'
 		},
 		'POST':{
-			'/github':'/index.json',
+			'/github':'/mock.json',
 			'/django':'http://restapi.cruises/CruiseService.svc/GetBookingInfo'
 		},
 		'SOAP':{
 			
 		}
 	},
-	'MOCK':false,
 	'TYPE':'HTTP',
-	'ROOT':'D:\\Github'
+	'ROOT':'D:\\Github\\glob-proxy'
 });

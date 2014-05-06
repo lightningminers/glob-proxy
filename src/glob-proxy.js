@@ -5,7 +5,7 @@ var Mock = require("mockjs");
 var path = require('path');
 var net = require('net');
 var buffer = require('buffer');
-
+var crypto = require('crypto');
 var Guider = function(config){
     var self = this;
     self.config = config;
@@ -30,6 +30,7 @@ Guider.prototype.start = function(){
             self.response = response;
             var result = self.handler();
             result.local ? self.staticFileService(result) : self.proxy(result);
+            console.log(result);
     }).listen(this.config.PORT);
 }
 Guider.prototype.handler = function(){
@@ -37,7 +38,7 @@ Guider.prototype.handler = function(){
     var parse = url.parse(this.request.url,true);
     var name = parse.pathname;
     if(name !== '/favicon.ico'){
-        var result = {'type':'HTTP','name':name};
+        var result = {'type':'HTTP','name':name,'mock':false};
         //识别请求类型，并对请求进行分析与序列化
         this.requeParse(result,parse);
     }
@@ -58,7 +59,8 @@ Guider.prototype.HTTP = function(result){
     var self = this;
     switch(method){
         case 'GET':
-            util.get.call(self,result);
+            result.cache = Memory(result);
+            server.get.call(self,result);
             break
         case 'POST':
             //根据请求方法 对提交的值进行重新装载
@@ -68,7 +70,8 @@ Guider.prototype.HTTP = function(result){
             });
             this.request.addListener('end',function(){
                 result.body = data;
-                util.post.call(self,result);
+                result.cache = Memory(result);
+                server.post.call(self,result);
             });
             break
     }
@@ -81,6 +84,8 @@ Guider.prototype.requeParse = function(result,parse){
     if(search.length){
         query = parse.query;
         local = parseInt(query.local,10);
+        //是否开启mock
+        result.mock = query.mock ? true : false;
         //请求序列化参数
         result.query = query;
     }
@@ -92,7 +97,12 @@ Guider.prototype.requeParse = function(result,parse){
     result.method = result.headers['access-control-request-method'] || this.request.method;
     //生成真实本地文件目录地址或远程代理地址
     if(this.config.TYPE === 'HTTP'){
-        result.URL = result.local ? path.join(this.ROOT,this.REQUEST[result.method][result.name]) : this.REQUEST[result.method][result.name];
+        try{
+            result.URL = result.local ? path.join(this.ROOT,this.REQUEST[result.method][result.name]) : this.REQUEST[result.method][result.name];
+        }catch(e){
+            this.error();
+            return false;
+        } 
     }
     if(this.config.TYPE === 'SOAP'){
         result.URL = this.REQUEST.SOAP[result.name];
@@ -106,6 +116,7 @@ Guider.prototype.requeParse = function(result,parse){
         try{
             var stat = fs.statSync(result.URL);
             result.status = (stat && stat.isFile()) ? true : false;
+            result.cache = Memory(result);
         }catch(e){
             console.log('文件无法读取，error:可能文件不存在，或没有权限读取此文件');
         }
@@ -114,7 +125,7 @@ Guider.prototype.requeParse = function(result,parse){
 Guider.prototype.error = function(){
     var response = this.response;
     this.responseHeader();
-    response.end("<h1>this request is 404 or handler is bad</h1>");
+    this.responseBody("<h1>this request is 404 or handler is bad</h1>");
 }
 Guider.prototype.responseHeader = function(){
     this.response.writeHead('200',{
@@ -123,6 +134,20 @@ Guider.prototype.responseHeader = function(){
         'Access-Control-Allow-Origin':'*',
         'Access-Control-Max-Age':30 * 24 * 3600
     });
+}
+Guider.prototype.responseBody = function(body,result){
+    var data;
+    if(result){
+        var _name = result.name.replace('/','');
+        if(result.cache){
+            data = memory[_name]['data'];
+        }else{
+            data = memory[_name]['data'] = body;
+            //生成文件
+            util.createFile.call(this,data);
+        }
+    }
+    this.response.end(data);
 }
 Guider.prototype.staticFileService = function(result){
     var self = this;
@@ -133,12 +158,12 @@ Guider.prototype.staticFileService = function(result){
     fs.readFile(result.URL,'utf-8', function(err, template) {
         var json = {};
         try{
-            json = self.config.MOCK ? Mock.mock(JSON.parse(template)) : JSON.parse(template);
+            json = result.mock ? Mock.mock(JSON.parse(template)) : JSON.parse(template);
         }catch(e){
             self.error();
         }
         self.responseHeader();
-        self.response.end(JSON.stringify(json, null, 4),'utf-8');
+        self.responseBody(JSON.stringify(json, null, 4),result);
     });
 }
 var extend = function(obj,of){
@@ -147,7 +172,8 @@ var extend = function(obj,of){
     }
     return of;
 }
-var util = {
+//server 端代理
+var server = {
     get:function(options){
         var self = this;
         var URL = options.URL + (options.search ||'');
@@ -159,7 +185,7 @@ var util = {
             response.on('end',function(){
                 var buf = new buffer.Buffer(data,'utf-8');
                 self.responseHeader();
-                self.response.end(buf.toString('utf-8'));
+                self.responseBody(buf.toString('utf-8'),options);
             });
         }).on('error', function(e) {
             console.log("Got error: " + e.message);
@@ -187,7 +213,7 @@ var util = {
             });
             response.on("end",function(){
                 self.responseHeader();
-                self.response.end(body,'utf-8');
+                self.responseBody(body,options);
             });
         });
         reque.on('error',function(e){
@@ -197,6 +223,54 @@ var util = {
         reque.end();
     }
 }
+var util = {
+    createFile:function(body){
+        var fileConfig = "utf-8";
+        var date = new Date();
+        var man = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()+'-'+date.getHours()+'-'+date.getMinutes()+'.txt';
+        var filePath = path.join(this.ROOT,man);
+        fs.writeFileSync(filePath, body, fileConfig);
+    }
+}
+//内存存储
+var memory = {};
+//cache 请求缓存机制，true为缓存不发起请求，false为不缓存，发起请求。
+var Memory = function(result){
+    //存储机制
+    var _key = result.name.replace('/','');
+    var _memory_key = memory[_key];
+    var calibration = function(){
+        var key;
+        switch(result.method){
+            case'GET':
+                key = result.URL + result.search;
+                break
+            case'POST':
+                key = result.URL + result.body;
+                break
+        }
+        return key;
+    }
+    if(_memory_key){
+        var _memory_key_ = calibration();
+        var _sha = crypto.createHash('sha1');
+        _sha.update(_memory_key_);
+        var _shakey = _sha.digest('hex');
+        return _shakey == _memory_key.shakey ? true : false;
+    }
+    var sha = crypto.createHash('sha1');
+    var _sha_key_ = calibration();
+    sha.update(_sha_key_);
+    memory[_key] = {
+        "url":result.URL,
+        "body":result.body,
+        "query":result.query,
+        "search":result.search,
+        "shakey":sha.digest('hex')
+    }
+    return false;
+}
+
 var glob = module.exports = {};
 glob.Config = function(config){
     var app = new Guider(config);
