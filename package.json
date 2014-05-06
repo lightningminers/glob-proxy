@@ -1,7 +1,7 @@
 {
   "name": "glob-proxy",
   "version": "0.0.1",
-  "description": "web proxy GET POST and MOCK DATA",
+  "description": "HTTP proxying",
   "main": "./src/glob-proxy.js",
   "directories": {
     "test": "test"
@@ -18,8 +18,7 @@
     "url": "git://github.com/lcepy/glob-proxy.git"
   },
   "keywords": [
-    "webproxy",
-    "proxy"
+    "http-proxy"
   ],
   "author": "wen",
   "license": "MIT",
