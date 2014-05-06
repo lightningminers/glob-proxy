@@ -1,0 +1,30 @@
+{
+  "name": "glob-proxy",
+  "version": "0.0.1",
+  "description": "web proxy GET POST and MOCK DATA",
+  "main": "./src/glob-proxy.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "mockjs": "^0.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lcepy/glob-proxy.git"
+  },
+  "keywords": [
+    "webproxy",
+    "proxy"
+  ],
+  "author": "wen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lcepy/glob-proxy/issues"
+  },
+  "homepage": "https://github.com/lcepy/glob-proxy"
+}
