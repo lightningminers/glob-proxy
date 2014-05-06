@@ -1,0 +1,85 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'E:\\nodejs\\\\node.exe',
+1 verbose cli   'E:\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'install',
+1 verbose cli   'mockjs' ]
+2 info using npm@1.2.21
+3 info using node@v0.10.7
+4 verbose node symlink E:\nodejs\\node.exe
+5 verbose read json e:\github\glob-proxy\package.json
+6 verbose from cache e:\github\glob-proxy\package.json
+7 verbose readDependencies using package.json deps
+8 verbose cache add [ 'mockjs@^0.1.1', null ]
+9 verbose cache add name=undefined spec="mockjs@^0.1.1" args=["mockjs@^0.1.1",null]
+10 verbose parsed url { protocol: null,
+10 verbose parsed url   slashes: null,
+10 verbose parsed url   auth: null,
+10 verbose parsed url   host: null,
+10 verbose parsed url   port: null,
+10 verbose parsed url   hostname: null,
+10 verbose parsed url   hash: null,
+10 verbose parsed url   search: null,
+10 verbose parsed url   query: null,
+10 verbose parsed url   pathname: 'mockjs@^0.1.1',
+10 verbose parsed url   path: 'mockjs@^0.1.1',
+10 verbose parsed url   href: 'mockjs@^0.1.1' }
+11 verbose cache add name="mockjs" spec="^0.1.1" args=["mockjs","^0.1.1"]
+12 verbose parsed url { protocol: null,
+12 verbose parsed url   slashes: null,
+12 verbose parsed url   auth: null,
+12 verbose parsed url   host: null,
+12 verbose parsed url   port: null,
+12 verbose parsed url   hostname: null,
+12 verbose parsed url   hash: null,
+12 verbose parsed url   search: null,
+12 verbose parsed url   query: null,
+12 verbose parsed url   pathname: '^0.1.1',
+12 verbose parsed url   path: '^0.1.1',
+12 verbose parsed url   href: '^0.1.1' }
+13 verbose addNamed [ 'mockjs', '^0.1.1' ]
+14 verbose addNamed [ null, null ]
+15 silly lockFile 6b38bd0d-mockjs-0-1-1 mockjs@^0.1.1
+16 verbose lock mockjs@^0.1.1 C:\Users\xiangwenwen\AppData\Roaming\npm-cache\6b38bd0d-mockjs-0-1-1.lock
+17 info addNameTag [ 'mockjs', '^0.1.1' ]
+18 verbose url raw mockjs
+19 verbose url resolving [ 'https://registry.npmjs.org/', './mockjs' ]
+20 verbose url resolved https://registry.npmjs.org/mockjs
+21 info trying registry request attempt 1 at 20:31:19
+22 verbose etag "9F0K0103TFWKKNGC8U9N7FDIG"
+23 http GET https://registry.npmjs.org/mockjs
+24 http 304 https://registry.npmjs.org/mockjs
+25 silly registry.get cb [ 304,
+25 silly registry.get   { date: 'Tue, 06 May 2014 12:31:19 GMT',
+25 silly registry.get     server: 'Apache',
+25 silly registry.get     via: '1.1 varnish',
+25 silly registry.get     'last-modified': 'Tue, 06 May 2014 12:31:19 GMT',
+25 silly registry.get     'cache-control': 'max-age=1',
+25 silly registry.get     etag: '"9F0K0103TFWKKNGC8U9N7FDIG"',
+25 silly registry.get     'x-served-by': 'cache-ty67-TYO',
+25 silly registry.get     'x-cache': 'MISS',
+25 silly registry.get     'x-cache-hits': '0',
+25 silly registry.get     'x-timer': 'S1399379479.264231205,VS0,VE259',
+25 silly registry.get     vary: 'Accept',
+25 silly registry.get     'content-length': '0',
+25 silly registry.get     'keep-alive': 'timeout=10, max=50',
+25 silly registry.get     connection: 'Keep-Alive' } ]
+26 verbose etag mockjs from cache
+27 silly lockFile 6b38bd0d-mockjs-0-1-1 mockjs@^0.1.1
+28 silly lockFile 6b38bd0d-mockjs-0-1-1 mockjs@^0.1.1
+29 error Error: No compatible version found: mockjs@'^0.1.1'
+29 error Valid install targets:
+29 error ["0.1.1"]
+29 error     at installTargetsError (E:\nodejs\node_modules\npm\lib\cache.js:709:10)
+29 error     at E:\nodejs\node_modules\npm\lib\cache.js:631:10
+29 error     at saved (E:\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\get.js:138:7)
+29 error     at Object.oncomplete (fs.js:107:15)
+30 error If you need help, you may report this log at:
+30 error     <http://github.com/isaacs/npm/issues>
+30 error or email it to:
+30 error     <npm-@googlegroups.com>
+31 error System Windows_NT 6.1.7601
+32 error command "E:\\nodejs\\\\node.exe" "E:\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "install" "mockjs"
+33 error cwd e:\github\glob-proxy
+34 error node -v v0.10.7
+35 error npm -v 1.2.21
+36 verbose exit [ 1, true ]

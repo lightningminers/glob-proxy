@@ -15,5 +15,5 @@ glob.Config({
 		}
 	},
 	'TYPE':'HTTP',
-	'ROOT':'D:\\Github\\glob-proxy'
+	'ROOT':'E:\\github\\glob-proxy'
 });

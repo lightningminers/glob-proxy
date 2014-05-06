@@ -29,7 +29,9 @@ Guider.prototype.start = function(){
             self.request = request;
             self.response = response;
             var result = self.handler();
-            result.local ? self.staticFileService(result) : self.proxy(result);
+            if(result){
+                result.local ? self.staticFileService(result) : self.proxy(result);
+            }
             console.log(result);
     }).listen(this.config.PORT);
 }
