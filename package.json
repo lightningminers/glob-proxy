@@ -1,6 +1,6 @@
 {
   "name": "glob-proxy",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "HTTP proxying",
   "main": "./src/glob-proxy.js",
   "directories": {
