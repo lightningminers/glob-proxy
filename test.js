@@ -8,7 +8,8 @@ glob.Config({
 		},
 		'POST':{
 			'/github':'/mock.json',
-			'/django':'http://restapi.cruises/CruiseService.svc/GetBookingInfo'
+			'/django':'http://m.fat19.qa.nt.ctripcorp.com/restapi.cruises/CruiseService.svc/GetBookingInfo'
+
 		},
 		'SOAP':{
 			

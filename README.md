@@ -13,10 +13,10 @@
 	'PORT':'8084',
 	'REQUEST':{
 		'GET':{
-			'/github':'/index.json'
+			'/github':'/mock.json'
 		},
 		'POST':{
-			'/github':'/index.json',
+			'/github':'/mock.json',
 			'/django':'http://restapi.cruises/CruiseService.svc/GetBookingInfo'
 		}
 	},
