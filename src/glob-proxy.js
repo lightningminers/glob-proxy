@@ -85,7 +85,7 @@ Guider.prototype.HTTP = function(result){
             result.cache = Memory(result);
             var isenforce = result.enforce ? true : false;
             if(result.cache && !isenforce){
-                isenforce = ReadCacheContent.call(self,false,true);
+                ReadCacheContent.call(self,false,true);
                 return;
             }
             if(isenforce){
@@ -106,9 +106,10 @@ Guider.prototype.HTTP = function(result){
                 result.cache = Memory(result);
                 var isrequest = result.enforce ? true : false;
                 if(result.cache && !isrequest){
-                    isrequest = ReadCacheContent.call(self,false,true);
+                    ReadCacheContent.call(self,false,true);
                     return;
                 }
+                console.log(isrequest)
                 if(isrequest){
                     result.cache = false;
                     server.post.call(self,result);
@@ -229,7 +230,8 @@ var server = {
                 var CS = options.enforce ? false : ReadCacheContent.call(self,response);
                 if(!CS){
                     var buf = new buffer.Buffer(data);
-                    self.responseBody(buf.toString('utf8'),options);
+                    var str = buf.toString('utf8');
+                    self.responseBody(str,options);
                 }
             });
         }).on('error', function(e){
@@ -261,7 +263,8 @@ var server = {
                 var CS = options.enforce ? false : ReadCacheContent.call(self,response);
                 if(!CS){
                     var buf = new buffer.Buffer(body);
-                    self.responseBody(buf.toString('utf8'),options);
+                    var str = buf.toString('utf8');
+                    self.responseBody(str,options);
                 }
             });
         });
@@ -391,9 +394,8 @@ var ReadCacheContent = function(pon,cache){
     var code = pon.statusCode;
     if(code > 400 && code < 550){
         return _memory_readfile_(true);
-    }else{
-        return _memory_readfile_(true)
     }
+    return false;
 }
 
 //定时任务器
