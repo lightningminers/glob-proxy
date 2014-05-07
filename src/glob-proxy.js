@@ -51,7 +51,7 @@ Guider.prototype.start = function(){
             var result = self.handler();
             if(result){
                 result.local ? self.staticFileService(result) : self.proxy(result);
-                console.log(result);
+                // console.log(result);
             }
     }).listen(this.config.PORT);
 }
@@ -107,7 +107,7 @@ Guider.prototype.HTTP = function(result){
     }
 }
 Guider.prototype.SOAP = function(result){
-    console.log(result);
+    // console.log(result);
 }
 Guider.prototype.requeParse = function(result,parse){
     var query,local = false,search = parse.search;
