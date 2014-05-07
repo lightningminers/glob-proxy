@@ -7,6 +7,15 @@ var net = require('net');
 var buffer = require('buffer');
 var crypto = require('crypto');
 
+//内部变量 KEY
+var __NAME__;
+//队列管理
+var queue = {};
+//内存存储
+var memory = {};
+//内存管理
+var memoryManagement = {};
+
 var Guider = function(config){
     var self = this;
     self.config = config;
@@ -51,6 +60,7 @@ Guider.prototype.handler = function(){
     var parse = url.parse(this.request.url,true);
     var name = parse.pathname;
     if(name !== '/favicon.ico'){
+        __NAME__ = name.replace('/','');
         result = {'type':'HTTP','name':name,'mock':false};
         //识别请求类型，并对请求进行分析与序列化
         this.requeParse(result,parse);
@@ -74,7 +84,7 @@ Guider.prototype.HTTP = function(result){
         case 'GET':
             result.cache = Memory(result);
             if(result.cache){
-                isrequest = ReadCacheContent.call(self,false,result,true);
+                isrequest = ReadCacheContent.call(self,false,true);
             }
             if(isrequest){server.get.call(self,result)}
             server.get.call(self,result);
@@ -89,7 +99,7 @@ Guider.prototype.HTTP = function(result){
                 result.body = data;
                 result.cache = Memory(result);
                 if(result.cache){
-                    isrequest = ReadCacheContent.call(self,false,result,true);
+                    isrequest = ReadCacheContent.call(self,false,true);
                 }
                 if(isrequest){server.post.call(self,result)}
             });
@@ -158,13 +168,14 @@ Guider.prototype.responseHeader = function(){
 Guider.prototype.responseBody = function(body,result){
     var data;
     if(result){
-        var _name = result.name.replace('/','');
         if(result.cache){
-            data = memory[_name]['data'];
+            data = memory[__NAME__]['data'];
         }else{
-            data = memory[_name]['data'] = body;
-            //生成文件
-            util.createFile.call(this,data,result);
+            data = memory[__NAME__]['data'] = body;
+            if(!result.local){
+                //生成 物理缓存文件
+                util.createFile.call(this,data,result);
+            }
         }
     }
     this.response.end(data||body);
@@ -192,7 +203,7 @@ var server = {
     get:function(options){
         var self = this;
         var URL = options.URL + (options.search ||'');
-        var name = options.name.replace('/','');
+        var name = __NAME__;
         http.get(URL, function(response) {
             var data = '';
             response.on('data',function(d) {
@@ -200,14 +211,14 @@ var server = {
             });
             response.on('end',function(){
                 self.responseHeader();
-                var CS = ReadCacheContent.call(self,response,options);
+                var CS = ReadCacheContent.call(self,true);
                 if(!CS){
                     var buf = new buffer.Buffer(data);
                     self.responseBody(buf.toString('utf8'),options);
                 }
             });
         }).on('error', function(e){
-            ReadCacheContent.call(self,false,options);
+            ReadCacheContent.call(self,false);
             console.log("Got error: " + e.message);
         });
     },
@@ -233,7 +244,7 @@ var server = {
             });
             response.on("end",function(){
                 self.responseHeader();
-                var CS = ReadCacheContent.call(self,response,options);
+                var CS = ReadCacheContent.call(self,true);
                 if(!CS){
                     var buf = new buffer.Buffer(body);
                     self.responseBody(buf.toString('utf8'),options);
@@ -241,7 +252,7 @@ var server = {
             });
         });
         reque.on('error',function(e){
-            ReadCacheContent.call(self,false,options);
+            ReadCacheContent.call(self,false);
             console.log('problem with request :' + e.message);
         });
         reque.write(options.body);
@@ -250,18 +261,18 @@ var server = {
 }
 // 工具函数
 var util = {
-    createFile:function(body,options){
+    createFile:function(body){
         var fileConfig = "utf-8";
         var date = new Date();
         var man = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()+'-'+date.getHours()+'-'+date.getMinutes()+'.txt';
         var filePath = path.join(this.ROOT,man);
-        var name = options.name.replace('/','');
-        memory[name]['physicaladd'] = filePath;
-        Queue[name] = {
+        var name = __NAME__;
+        memory[__NAME__]['physicaladd'] = filePath;
+        queue[__NAME__] = {
             "physicaladd":filePath,
             "time":man
         }
-        fs.writeFileSync(this.CACHEADDRESS,JSON.stringify(Queue),fileConfig);
+        fs.writeFileSync(this.CACHEADDRESS,JSON.stringify(queue),fileConfig);
         fs.writeFileSync(filePath, body, fileConfig);
     },
     extend:function(obj,of){
@@ -271,17 +282,12 @@ var util = {
         return of;
     }
 }
-//队列管理
-var Queue = {};
-//内存存储
-var memory = {};
-//内存管理
-var memoryManagement = {};
+
 
 //cache 请求缓存机制，true为缓存不发起请求，false为不缓存，发起请求。
 var Memory = function(result){
     //存储机制
-    var _key = result.name.replace('/','');
+    var _key = __NAME__;
     var _memory_key = memory[_key];
     var calibration = function(){
         var key;
@@ -325,12 +331,11 @@ var Memory = function(result){
 //识别队列中当前请求是否存在，如果不存在则重新读取本地配置文件，如果配置文件中队列的请求也不存在。
 //返回远程服务，如果前两种有任意一种存在则响应最新一次的缓存内容。
 
-var ReadCacheContent = function(response,options,cache){
+var ReadCacheContent = function(pon,cache){
     var self = this;
-    var name,key,ism,handlerStatus,cache = cache,pon = response;
+    var key,ism,handlerStatus,cache = cache,pon = pon;
     var isMemory = function(){
-        name = options.name.replace('/','');
-        key = memory[name];
+        key = memory[__NAME__];
         if(!key){
             return false;
         }
@@ -379,11 +384,42 @@ var ReadCacheContent = function(response,options,cache){
 
 //定时任务器
 setInterval(function(){
-    /**
-    *  处理队列，内存管理，根据memoryManagement打分机制，释放使用率最低的内存缓存，两小时启动一次。
-    */
 
-},1000*60*2);
+    // 释放内存临界点多余二十条存储时
+    var criticalPoint = 20 ,copy = [],i=0,to = memoryManagement[__NAME__].index;
+    for(var k in memoryManagement){
+        i++
+        if(i > criticalPoint){
+            criticalPoint = false;
+            break;
+        }
+    }
+    if(!criticalPoint){
+        for(var v in memoryManagement){
+            if(memoryManagement[v].index > to){
+                copy.push(memoryManagement[v]);
+            } 
+            if(memoryManagement[v].index < to){
+                copy.unshift(memoryManagement[v]);
+            }
+        }
+    }
+    for(var r = 0,len = copy.length;r<len;r++){
+        if(r === (len/2)){
+            break;
+        }
+        var manage = copy[r];
+        for(var key in manage){
+            delete memory[key];
+            delete memoryManagement[key];
+            if(query[key]){
+                delete query[key];
+            }
+        }
+    }
+    copy.length = 0;
+
+},1000*60*60*2);
 
 var glob = module.exports = {};
 glob.Config = function(config){
