@@ -79,14 +79,20 @@ Guider.prototype.proxy = function(result){
 }
 Guider.prototype.HTTP = function(result){
     var method = result.method;
-    var self = this,isrequest;
+    var self = this;
     switch(method){
         case 'GET':
             result.cache = Memory(result);
-            if(result.cache){
-                isrequest = ReadCacheContent.call(self,false,true);
+            var isenforce = result.enforce ? true : false;
+            if(result.cache && !isenforce){
+                isenforce = ReadCacheContent.call(self,false,true);
+                return;
             }
-            if(isrequest){server.get.call(self,result)}
+            if(isenforce){
+                result.cache = false;
+                server.get.call(self,result);
+                return;
+            }
             server.get.call(self,result);
             break
         case 'POST':
@@ -98,10 +104,17 @@ Guider.prototype.HTTP = function(result){
             this.request.addListener('end',function(){
                 result.body = data;
                 result.cache = Memory(result);
-                if(result.cache){
+                var isrequest = result.enforce ? true : false;
+                if(result.cache && !isrequest){
                     isrequest = ReadCacheContent.call(self,false,true);
+                    return;
                 }
-                if(isrequest){server.post.call(self,result)}
+                if(isrequest){
+                    result.cache = false;
+                    server.post.call(self,result);
+                    return;
+                }
+                server.post.call(self,result);
             });
             break
     }
@@ -116,6 +129,8 @@ Guider.prototype.requeParse = function(result,parse){
         local = parseInt(query.local,10);
         //是否开启mock
         result.mock = query.mock ? true : false;
+        //是否强制请求
+        result.enforce = query.enforce ? true : false;
         //请求序列化参数
         result.query = query;
     }
@@ -178,6 +193,7 @@ Guider.prototype.responseBody = function(body,result){
             }
         }
     }
+    this.responseHeader();
     this.response.end(data||body);
 }
 Guider.prototype.staticFileService = function(result){
@@ -210,8 +226,7 @@ var server = {
                 data += d;
             });
             response.on('end',function(){
-                self.responseHeader();
-                var CS = ReadCacheContent.call(self,true);
+                var CS = options.enforce ? false : ReadCacheContent.call(self,response);
                 if(!CS){
                     var buf = new buffer.Buffer(data);
                     self.responseBody(buf.toString('utf8'),options);
@@ -243,8 +258,7 @@ var server = {
                 body += chunk;
             });
             response.on("end",function(){
-                self.responseHeader();
-                var CS = ReadCacheContent.call(self,true);
+                var CS = options.enforce ? false : ReadCacheContent.call(self,response);
                 if(!CS){
                     var buf = new buffer.Buffer(body);
                     self.responseBody(buf.toString('utf8'),options);
@@ -333,7 +347,7 @@ var Memory = function(result){
 
 var ReadCacheContent = function(pon,cache){
     var self = this;
-    var key,ism,handlerStatus,cache = cache,pon = pon;
+    var key,ism,cache = cache,pon = pon;
     var isMemory = function(){
         key = memory[__NAME__];
         if(!key){
@@ -372,13 +386,13 @@ var ReadCacheContent = function(pon,cache){
         return false;
     }
     if(!pon){
-        handlerStatus = _memory_readfile_(cache||false);
-        return handlerStatus;
+        return _memory_readfile_(cache||false);
     }
-    var code = response.statusCode;
+    var code = pon.statusCode;
     if(code > 400 && code < 550){
-        handlerStatus = _memory_readfile_(true);
-        return handlerStatus;
+        return _memory_readfile_(true);
+    }else{
+        return _memory_readfile_(true)
     }
 }
 
