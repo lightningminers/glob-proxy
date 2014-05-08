@@ -58,7 +58,9 @@ Guider.prototype.start = function(){
     var server = http.createServer(function(request,response){
             self.request = request;
             self.response = response;
+            console.log('-----------^^^^^^^^^^-------- REQUEST');
             var result = self.handler();
+            console.log('URL : ',result.URL)
             if(result){
                 result.local ? self.staticFileService(result) : self.proxy(result);
             }
@@ -92,6 +94,8 @@ Guider.prototype.HTTP = function(result){
     var handlerMemoryandfirstrequest = function(){
         //识别是否是第一次请求
         if(self.FIRSTREADCONTENT && !result.enforce && !(memoryManagement[__NAME__].index > 0)){
+            console.log('is FIRSTREADCONTENT : true');
+            console.log(self.FIRSTREADCONTENT[__NAME__].cachePhysical)
             try{
                 var cachefs = fs.readFileSync(self.FIRSTREADCONTENT[__NAME__].cachePhysical,'utf8');
             }catch(e){
@@ -123,6 +127,8 @@ Guider.prototype.HTTP = function(result){
         case 'GET':
             //对内存装载
             result.cache = Memory(result);
+            console.log('GET Param : ',result.search);
+            console.log('is cache : ',result.cache);
             var isStop = handlerMemoryandfirstrequest()
             if(isStop){
                 return;
@@ -139,6 +145,8 @@ Guider.prototype.HTTP = function(result){
                 result.body = data;
                 //对内存装载
                 result.cache = Memory(result);
+                console.log('POST Param : ',result.body);
+                console.log('is cache : ',result.cache);
                 var isStop = handlerMemoryandfirstrequest()
                 if(isStop){
                     return;
@@ -313,8 +321,8 @@ var util = {
     createFile:function(body){
         var fileConfig = "utf-8";
         var date = new Date();
-        var man = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()+'-'+date.getHours()+'-'+date.getMinutes()+'.txt';
-        var filePath = path.join(this.ROOT,man);
+        var man = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()+'-'+date.getHours()+'-'+date.getMinutes();
+        var filePath = path.join(this.ROOT,man+'.txt');
         var name = __NAME__;
         memory[__NAME__]['cachePhysical'] = filePath;
         queue[__NAME__] = {
@@ -392,6 +400,7 @@ var ReadCacheContent = function(pon,cache){
         if(!key){
             return false;
         }
+        console.log('is read memory cache : true');
         self.responseBody(key['data']);
         return true;
     }
@@ -411,6 +420,7 @@ var ReadCacheContent = function(pon,cache){
         if(!self.READCACHE){
             isReadFile(function(cacheconfig){
                 console.log('the last cache file time is ',cacheconfig.time);
+                console.log('is read rhysical file cache : true');
                 fs.readFile(cacheconfig.cachePhysical,function(err,data){
                     if(err) throw err;
                     var buf = new buffer.Buffer(data);
