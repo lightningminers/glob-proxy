@@ -316,6 +316,7 @@ var server = {
         reque.end();
     }
 }
+
 // 工具函数
 var util = {
     createFile:function(body){
@@ -446,13 +447,14 @@ var ReadCacheContent = function(pon,cache){
 
 //定时任务器
 setInterval(function(){
-
+    console.log('-------------------^^^^^^ memoryManagement');
     // 释放内存临界点多余二十条存储时
     var criticalPoint = 20 ,copy = [],i=0,to = memoryManagement[__NAME__].index;
     for(var k in memoryManagement){
         i++
         if(i > criticalPoint){
             criticalPoint = false;
+            console.log('start memoryManagement delete');
             break;
         }
     }
@@ -474,8 +476,11 @@ setInterval(function(){
         for(var key in manage){
             delete memory[key];
             delete memoryManagement[key];
+            console.log('delete memory : ',key);
+            console.log('delete memoryManagement : ',key);
             if(query[key]){
                 delete query[key];
+                console.log('delete query : ',key);
             }
         }
     }
