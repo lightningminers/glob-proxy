@@ -11,7 +11,8 @@
 
     touch index.js   
 
-修改文件内容，(windows用户参考如下)_	
+修改文件内容，(windows用户参考如下)	
+    
     var glob = require('glob-proxy');
 	glob.Config({
 	'PORT':'8084',
