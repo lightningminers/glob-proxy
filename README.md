@@ -7,8 +7,13 @@
 
 	npm install glob-proxy
 ## Use
+新建index.js文件    
 
-	var glob = require('glob-proxy');
+    touch index.js   
+
+修改文件内容，(windows用户参考如下)	
+    
+    var glob = require('glob-proxy');
 	glob.Config({
 	'PORT':'8084',
 	'REQUEST':{
@@ -17,13 +22,13 @@
 		},
 		'POST':{
 			'/github':'/mock.json',
-			'/django':'http://restapi.cruises/CruiseService.svc/GetBookingInfo'
 		}
 	},
 	'TYPE':'HTTP',
 	'ROOT':'D:\\Github'
 	});
 
+运行node index.js, 在浏览器中访问 <http://127.0.0.1/github?mock=1&local=1>.
 ## Config
 
 >
