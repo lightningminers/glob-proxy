@@ -36,11 +36,21 @@ var Guider = function(config){
     self.CACHEADDRESS = self.WORKROOT + path.sep + 'cache.json';
     try{
         var cachefs = fs.statSync(self.CACHEADDRESS);
-        self.READCACHE = (cachefs&&cachefs.isFile()) ? true : false;
+        self.READCACHE = !!(cachefs&&cachefs.isFile());
     }catch(e){
         console.log('无法读取配置文件，在错误来临时，自动转换模式无非开启');
     }
-
+    /**
+    * 问题描述：如何在接口爆的状态下，自动识别读取本地文件。第一次启动时。
+    */
+    if(self.READCACHE){
+        var fileData = fs.readFileSync(self.CACHEADDRESS,'utf8');
+        try{
+            self.FIRSTREADCONTENT = JSON.parse(fileData);
+        }catch(e){
+            console.log('配置文件读取不正确，无法开启自动转换模式');
+        }
+    }
 }
 Guider.prototype.start = function(){
     var self = this;
@@ -51,7 +61,6 @@ Guider.prototype.start = function(){
             var result = self.handler();
             if(result){
                 result.local ? self.staticFileService(result) : self.proxy(result);
-                // console.log(result);
             }
     }).listen(this.config.PORT);
 }
@@ -80,20 +89,45 @@ Guider.prototype.proxy = function(result){
 Guider.prototype.HTTP = function(result){
     var method = result.method;
     var self = this;
+    var handlerMemoryandfirstrequest = function(){
+        //识别是否是第一次请求
+        if(self.FIRSTREADCONTENT && !result.enforce && !(memoryManagement[__NAME__].index > 0)){
+            try{
+                var cachefs = fs.readFileSync(self.FIRSTREADCONTENT[__NAME__].cachePhysical,'utf8');
+            }catch(e){
+                console.log('物理文件不存在，继续发起请求');
+            }
+            if(cachefs){
+                self.responseHeader();
+                self.responseBody(cachefs,false,true);
+                return true;
+            }
+        }
+        return false;
+    }
+    //处理强制刷新
+    var handlerenforcerequest = function(option){
+        var isenforce = !!result.enforce;
+        if(result.cache && !isenforce){
+            ReadCacheContent.call(self,false,true);
+            return;
+        }
+        if(isenforce){
+            result.cache = false;
+            server[option].call(self,result);
+            return;
+        }
+        server[option].call(self,result);
+    }
     switch(method){
         case 'GET':
+            //对内存装载
             result.cache = Memory(result);
-            var isenforce = result.enforce ? true : false;
-            if(result.cache && !isenforce){
-                ReadCacheContent.call(self,false,true);
+            var isStop = handlerMemoryandfirstrequest()
+            if(isStop){
                 return;
             }
-            if(isenforce){
-                result.cache = false;
-                server.get.call(self,result);
-                return;
-            }
-            server.get.call(self,result);
+            handlerenforcerequest('get');
             break
         case 'POST':
             //根据请求方法 对提交的值进行重新装载
@@ -103,25 +137,19 @@ Guider.prototype.HTTP = function(result){
             });
             this.request.addListener('end',function(){
                 result.body = data;
+                //对内存装载
                 result.cache = Memory(result);
-                var isrequest = result.enforce ? true : false;
-                if(result.cache && !isrequest){
-                    ReadCacheContent.call(self,false,true);
+                var isStop = handlerMemoryandfirstrequest()
+                if(isStop){
                     return;
                 }
-                console.log(isrequest)
-                if(isrequest){
-                    result.cache = false;
-                    server.post.call(self,result);
-                    return;
-                }
-                server.post.call(self,result);
+                handlerenforcerequest('post');
             });
             break
     }
 }
 Guider.prototype.SOAP = function(result){
-    // console.log(result);
+    //console.log(result);
 }
 Guider.prototype.requeParse = function(result,parse){
     var query,local = false,search = parse.search;
@@ -129,14 +157,14 @@ Guider.prototype.requeParse = function(result,parse){
         query = parse.query;
         local = parseInt(query.local,10);
         //是否开启mock
-        result.mock = query.mock ? true : false;
+        result.mock = !!query.mock;
         //是否强制请求
-        result.enforce = query.enforce ? true : false;
+        result.enforce = !!query.enforce;
         //请求序列化参数
         result.query = query;
     }
     //通过local属性识别，发送代理请求，还是读取本地文件 false为代理请求，true为读取本地文件
-    result.local = local ? true : false;
+    result.local = !!local;
     //根据头信息进行代理提交
     result.headers = this.request.headers;
     //分析真实请求method
@@ -161,7 +189,7 @@ Guider.prototype.requeParse = function(result,parse){
     if(local){
         try{
             var stat = fs.statSync(result.URL);
-            result.status = (stat && stat.isFile()) ? true : false;
+            result.status = !!(stat && stat.isFile());
             result.cache = Memory(result);
         }catch(e){
             console.log('文件无法读取，error:可能文件不存在，或没有权限读取此文件');
@@ -171,7 +199,7 @@ Guider.prototype.requeParse = function(result,parse){
 Guider.prototype.error = function(){
     var response = this.response;
     this.responseHeader();
-    this.responseBody("<h1>this request is 404 or handler is bad</h1>");
+    this.responseBody('<h1>this request proxy to server is bad !! you need cache.json or your memory\'s data not empty !!!</h1>');
 }
 Guider.prototype.responseHeader = function(){
     this.response.writeHead('200',{
@@ -181,18 +209,22 @@ Guider.prototype.responseHeader = function(){
         'Access-Control-Max-Age':30 * 24 * 3600
     });
 }
-Guider.prototype.responseBody = function(body,result){
+Guider.prototype.responseBody = function(body,result,firstRequestCode){
     var data;
-    if(result){
-        if(result.cache){
-            data = memory[__NAME__]['data'];
-        }else{
-            data = memory[__NAME__]['data'] = body;
-            if(!result.local){
-                //生成 物理缓存文件
-                util.createFile.call(this,data,result);
+    if(!firstRequestCode){
+        if(result){
+            if(result.cache){
+                data = memory[__NAME__]['data'];
+            }else{
+                data = memory[__NAME__]['data'] = body;
+                if(!result.local){
+                    //生成 物理缓存文件
+                    util.createFile.call(this,data,result);
+                }
             }
         }
+    }else{
+        memory[__NAME__]['data'] = body;
     }
     this.responseHeader();
     this.response.end(data||body);
@@ -284,9 +316,9 @@ var util = {
         var man = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()+'-'+date.getHours()+'-'+date.getMinutes()+'.txt';
         var filePath = path.join(this.ROOT,man);
         var name = __NAME__;
-        memory[__NAME__]['physicaladd'] = filePath;
+        memory[__NAME__]['cachePhysical'] = filePath;
         queue[__NAME__] = {
-            "physicaladd":filePath,
+            "cachePhysical":filePath,
             "time":man
         }
         fs.writeFileSync(this.CACHEADDRESS,JSON.stringify(queue),fileConfig);
@@ -325,7 +357,11 @@ var Memory = function(result){
         var _shakey = _sha.digest('hex');
         _memory_key.status = true;
         memoryManagement[_key].index += 1;
-        return _shakey == _memory_key.shakey ? true : false;
+        var _memory_status = (_shakey == _memory_key.shakey) ? true : false;
+        if(!_memory_status){
+            _memory_key.shakey = _shakey;
+        }
+        return _memory_status;
     }
     var sha = crypto.createHash('sha1');
     var _sha_key_ = calibration();
@@ -375,7 +411,7 @@ var ReadCacheContent = function(pon,cache){
         if(!self.READCACHE){
             isReadFile(function(cacheconfig){
                 console.log('the last cache file time is ',cacheconfig.time);
-                fs.readFile(cacheconfig.physicaladd,function(err,data){
+                fs.readFile(cacheconfig.cachePhysical,function(err,data){
                     if(err) throw err;
                     var buf = new buffer.Buffer(data);
                     self.responseBody(buf.toString('utf8'));
