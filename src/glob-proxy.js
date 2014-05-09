@@ -15,14 +15,28 @@ var queue = {};
 var memory = {};
 //内存管理
 var memoryManagement = {};
-
+//提供的API
+var api = {};
+//日志类
+var GuiderLog = function(){
+    var self = this;
+    self.LOG = [];
+}
+//主类
 var Guider = function(config){
     var self = this;
-    self.config = config;
-    self.REQUEST = config.REQUEST;
-    self.ROOT = config.ROOT || null;
+
+    if(config){
+        self.PORT = config.PORT;
+        self.REQUEST = config.REQUEST;
+        self.ROOT = config.ROOT || null;
+        self.TYPE = config.TYPE || 'HTTP';
+    }
+
     self.WORKROOT = process.cwd();
     self.READCACHE = false;
+
+
     /**
     *   TYPE 类型用于支持HTTP SOAP TCP 代理 未来支持SOAP TCP协议
     *   PORT 初始化请求端口
@@ -40,6 +54,7 @@ var Guider = function(config){
     }catch(e){
         console.log('无法读取配置文件，在错误来临时，自动转换模式无非开启');
     }
+
     /**
     * 问题描述：如何在接口爆的状态下，自动识别读取本地文件。第一次启动时。
     */
@@ -51,20 +66,30 @@ var Guider = function(config){
             console.log('配置文件读取不正确，无法开启自动转换模式');
         }
     }
+    /**
+    * 提供对外的API
+    */
+    api = {
+        "merge":self.merge.bind(self)
+    }
+    if(typeof self.external.initialize === 'function'){
+        self.lnternal = new self.external.initialize(api);
+    }
 }
+
 Guider.prototype.start = function(){
     var self = this;
-    console.log('start server 127.0.0.1',this.config.PORT);
+    console.log('start server 127.0.0.1',this.PORT);
     var server = http.createServer(function(request,response){
             self.request = request;
             self.response = response;
             console.log('-----------^^^^^^^^^^-------- REQUEST');
             var result = self.handler();
-            console.log('URL : ',result.URL)
             if(result){
+                console.log('URL : ',result.URL)
                 result.local ? self.staticFileService(result) : self.proxy(result);
             }
-    }).listen(this.config.PORT);
+    }).listen(this.PORT);
 }
 Guider.prototype.handler = function(){
     var self = this,result;
@@ -95,7 +120,9 @@ Guider.prototype.HTTP = function(result){
         //识别是否是第一次请求
         if(self.FIRSTREADCONTENT && !result.enforce && !(memoryManagement[__NAME__].index > 0)){
             console.log('is FIRSTREADCONTENT : true');
-            console.log(self.FIRSTREADCONTENT[__NAME__].cachePhysical)
+            if(self.FIRSTREADCONTENT[__NAME__]){
+                console.log(self.FIRSTREADCONTENT[__NAME__].cachePhysical);
+            }
             try{
                 var cachefs = fs.readFileSync(self.FIRSTREADCONTENT[__NAME__].cachePhysical,'utf8');
             }catch(e){
@@ -178,7 +205,7 @@ Guider.prototype.requeParse = function(result,parse){
     //分析真实请求method
     result.method = result.headers['access-control-request-method'] || this.request.method;
     //生成真实本地文件目录地址或远程代理地址
-    if(this.config.TYPE === 'HTTP'){
+    if(this.TYPE === 'HTTP'){
         try{
             result.URL = result.local ? path.join(this.ROOT,this.REQUEST[result.method][result.name]) : this.REQUEST[result.method][result.name];
         }catch(e){
@@ -186,7 +213,7 @@ Guider.prototype.requeParse = function(result,parse){
             return false;
         } 
     }
-    if(this.config.TYPE === 'SOAP'){
+    if(this.TYPE === 'SOAP'){
         result.URL = this.REQUEST.SOAP[result.name];
         result.type = 'SOAP';
     }
@@ -227,7 +254,7 @@ Guider.prototype.responseBody = function(body,result,firstRequestCode){
                 data = memory[__NAME__]['data'] = body;
                 if(!result.local){
                     //生成 物理缓存文件
-                    util.createFile.call(this,data,result);
+                    util.create_file.call(this,data,result);
                 }
             }
         }
@@ -254,6 +281,38 @@ Guider.prototype.staticFileService = function(result){
         self.responseBody(JSON.stringify(json, null, 4),result);
     });
 }
+
+Guider.prototype.merge = function(key,value){
+    if(_len >= 2){
+        var _key = key.split('.'),index = 0,_len = _key.length,cache = this;
+        while(true){
+            if(index < _len){
+                if(index == (_len-1)){
+                    cache[_key[index]] = value;
+                    break;
+                }
+                cache = cache[_key[index]];
+                if(cache){
+                    index ++
+                }
+            }
+        }
+        return;
+    }
+    if(typeof value === 'string'){
+        this[key] = value;
+    }else{
+        if(value === Object(value)){
+            for(var k in value){
+                if(property[k]){
+                    this[key][k] = value[k]
+                } 
+            }
+        }
+    }
+}
+
+var proto = Guider.prototype.external = {};
 
 //server 端代理
 var server = {
@@ -282,7 +341,13 @@ var server = {
     post:function(options){
         var self = this;
         var urlParse = url.parse(options.URL);
-        var headers = util.extend({
+        var extend = function(obj,of){
+            for(var k in obj){
+                of[k] = obj[k];
+            }
+            return of;
+        }
+        var headers = extend({
             "Content-Length":options.body.length,
             "host":urlParse.host
         },options.headers);
@@ -319,7 +384,7 @@ var server = {
 
 // 工具函数
 var util = {
-    createFile:function(body){
+    create_file:function(body){
         var fileConfig = "utf-8";
         var date = new Date();
         var man = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()+'-'+date.getHours()+'-'+date.getMinutes();
@@ -332,15 +397,8 @@ var util = {
         }
         fs.writeFileSync(this.CACHEADDRESS,JSON.stringify(queue),fileConfig);
         fs.writeFileSync(filePath, body, fileConfig);
-    },
-    extend:function(obj,of){
-        for(var k in obj){
-            of[k] = obj[k];
-        }
-        return of;
     }
 }
-
 
 //cache 请求缓存机制，true为缓存不发起请求，false为不缓存，发起请求。
 var Memory = function(result){
@@ -447,6 +505,7 @@ var ReadCacheContent = function(pon,cache){
 
 //定时任务器
 setInterval(function(){
+
     console.log('-------------------^^^^^^ memoryManagement');
     // 释放内存临界点多余二十条存储时
     var criticalPoint = 20 ,copy = [],i=0,to = memoryManagement[__NAME__].index;
@@ -489,7 +548,13 @@ setInterval(function(){
 },1000*60*60*2);
 
 var glob = module.exports = {};
-glob.Config = function(config){
-    var app = new Guider(config);
+var glob_config = {};
+glob.initialize = function(callback){
+    if(typeof callback === 'function')proto.initialize = callback;
+    var app = new Guider(glob_config);
     app.start();
+    return app.lnternal;
+}
+glob.use = function(k,v){
+    glob_config[k] = v;
 }

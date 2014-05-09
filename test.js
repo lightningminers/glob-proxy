@@ -1,20 +1,21 @@
 var glob = require('./src/glob-proxy');
 
-glob.Config({
-	'PORT':'8084',
-	'REQUEST':{
-		'GET':{
-			'/github':'/mock.json'
-		},
-		'POST':{
-			'/github':'/mock.json',
-			'/django':'http://m.fat19.qa.nt.ctripcorp.com/restapi.cruises/CruiseService.svc/GetBookingInfo'
 
-		},
-		'SOAP':{
-			
-		}
+glob.use('PORT','8084');
+glob.use('TYPE','HTTP');
+glob.use('ROOT','D:\\Github\\glob-proxy');
+glob.use('REQUEST',{
+	"GET":{
+		"/github":"/mock.json",
+		"/under":"http://underscorejs.org/"
 	},
-	'TYPE':'HTTP',
-	'ROOT':'E:\\github\\glob-proxy'
-});
+	"POST":{
+		"/django":"http://xxxxxx"
+	}
+})
+glob.initialize();
+
+
+
+
+
