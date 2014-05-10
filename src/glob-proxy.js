@@ -1,11 +1,15 @@
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
-var Mock = require("mockjs");
+// var Mock = require("mockjs");
 var path = require('path');
 var net = require('net');
 var buffer = require('buffer');
 var crypto = require('crypto');
+var util = require('./util');
+var io = require('./io');
+var shell = require('./shell');
+shell.exit();
 
 //内部变量 KEY
 var __NAME__;
@@ -17,15 +21,11 @@ var memory = {};
 var memoryManagement = {};
 //提供的API
 var api = {};
-//日志类
-var GuiderLog = function(){
-    var self = this;
-    self.LOG = [];
-}
+
+
 //主类
 var Guider = function(config){
     var self = this;
-
     if(config){
         self.PORT = config.PORT;
         self.REQUEST = config.REQUEST;
@@ -254,7 +254,7 @@ Guider.prototype.responseBody = function(body,result,firstRequestCode){
                 data = memory[__NAME__]['data'] = body;
                 if(!result.local){
                     //生成 物理缓存文件
-                    util.create_file.call(this,data,result);
+                    CreateMemoryFileCache.call(this,data,result);
                 }
             }
         }
@@ -311,8 +311,8 @@ Guider.prototype.merge = function(key,value){
         }
     }
 }
-
 var proto = Guider.prototype.external = {};
+
 
 //server 端代理
 var server = {
@@ -382,21 +382,23 @@ var server = {
     }
 }
 
-// 工具函数
-var util = {
-    create_file:function(body){
-        var fileConfig = "utf-8";
-        var date = new Date();
-        var man = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()+'-'+date.getHours()+'-'+date.getMinutes();
-        var filePath = path.join(this.ROOT,man+'.txt');
-        var name = __NAME__;
-        memory[__NAME__]['cachePhysical'] = filePath;
-        queue[__NAME__] = {
-            "cachePhysical":filePath,
-            "time":man
-        }
+//对于内存缓存与生产物理缓存文件
+var CreateMemoryFileCache = function(body){
+    var fileConfig = "utf-8";
+    var date = new Date();
+    var man = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate()+'-'+date.getHours()+'-'+date.getMinutes();
+    var filePath = path.join(this.ROOT,man+'.txt');
+    var name = __NAME__;
+    memory[__NAME__]['cachePhysical'] = filePath;
+    queue[__NAME__] = {
+        "cachePhysical":filePath,
+        "time":man
+    }
+    try{
         fs.writeFileSync(this.CACHEADDRESS,JSON.stringify(queue),fileConfig);
         fs.writeFileSync(filePath, body, fileConfig);
+    }catch(e){
+        console.log('ROOT配置不正确');
     }
 }
 
@@ -547,6 +549,12 @@ setInterval(function(){
 
 },1000*60*60*2);
 
+
+
+
+/**
+    公共对外
+*/
 var glob = module.exports = {};
 var glob_config = {};
 glob.initialize = function(callback){
@@ -558,3 +566,5 @@ glob.initialize = function(callback){
 glob.use = function(k,v){
     glob_config[k] = v;
 }
+glob.io = io;
+glob.util = util;
