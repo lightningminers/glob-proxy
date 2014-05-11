@@ -9,6 +9,7 @@ var crypto = require('crypto');
 var util = require('./util');
 var io = require('./io');
 var shell = require('./shell');
+var log = require('./GuiderLog');
 shell.exit();
 
 //内部变量 KEY
@@ -47,14 +48,15 @@ var Guider = function(config){
     *   STATIC_DIR_CONFIG 配置静态服务器端口
     *   MOCK 是否开启mock.js
     */
+
+
     self.CACHEADDRESS = self.WORKROOT + path.sep + 'cache.json';
     try{
         var cachefs = fs.statSync(self.CACHEADDRESS);
         self.READCACHE = !!(cachefs&&cachefs.isFile());
     }catch(e){
-        console.log('无法读取配置文件，在错误来临时，自动转换模式无非开启');
+        log.append('READCACHEFILE','无法读取配置文件，在错误来临时，自动转换模式无非开启');   
     }
-
     /**
     * 问题描述：如何在接口爆的状态下，自动识别读取本地文件。第一次启动时。
     */
@@ -63,7 +65,7 @@ var Guider = function(config){
         try{
             self.FIRSTREADCONTENT = JSON.parse(fileData);
         }catch(e){
-            console.log('配置文件读取不正确，无法开启自动转换模式');
+            log.append('READCONFIGFILE','配置文件读取不正确，无法开启自动转换模式');
         }
     }
     /**
@@ -79,14 +81,15 @@ var Guider = function(config){
 
 Guider.prototype.start = function(){
     var self = this;
-    console.log('start server 127.0.0.1',this.PORT);
+    console.log('start server 127.0.0.1 : ',this.PORT);
+    console.log('version : ','0.0.5');
     var server = http.createServer(function(request,response){
             self.request = request;
             self.response = response;
             console.log('-----------^^^^^^^^^^-------- REQUEST');
             var result = self.handler();
             if(result){
-                console.log('URL : ',result.URL)
+                log.append('URL',result.URL);
                 result.local ? self.staticFileService(result) : self.proxy(result);
             }
     }).listen(this.PORT);
@@ -119,7 +122,7 @@ Guider.prototype.HTTP = function(result){
     var handlerMemoryandfirstrequest = function(){
         //识别是否是第一次请求
         if(self.FIRSTREADCONTENT && !result.enforce && !(memoryManagement[__NAME__].index > 0)){
-            console.log('is FIRSTREADCONTENT : true');
+            console.log('is FIRSTREADCONTENT : true');`
             if(self.FIRSTREADCONTENT[__NAME__]){
                 console.log(self.FIRSTREADCONTENT[__NAME__].cachePhysical);
             }
@@ -509,14 +512,16 @@ var ReadCacheContent = function(pon,cache){
 setInterval(function(){
 
     console.log('-------------------^^^^^^ memoryManagement');
-    // 释放内存临界点多余二十条存储时
-    var criticalPoint = 20 ,copy = [],i=0,to = memoryManagement[__NAME__].index;
-    for(var k in memoryManagement){
-        i++
-        if(i > criticalPoint){
-            criticalPoint = false;
-            console.log('start memoryManagement delete');
-            break;
+    if(memoryManagement[__NAME__]){
+        // 释放内存临界点多余二十条存储时
+        var criticalPoint = 20 ,copy = [],i=0,to = memoryManagement[__NAME__].index;
+        for(var k in memoryManagement){
+            i++
+            if(i > criticalPoint){
+                criticalPoint = false;
+                console.log('start memoryManagement delete');
+                break;
+            }
         }
     }
     if(!criticalPoint){

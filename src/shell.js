@@ -15,16 +15,14 @@ shell.exit = function(){
             process.stdin.setEncoding('utf8');
             process.stdin.on('data',function(chunk){
                 var chunk = chunk.toString().replace(/\n/,'');
+                var g = chunk.match(/\w+/);
                 process.stdin.pause();
-                /**
-                    问题描述 chunk 数据流？buffer转换不了，长度2；
-
-                    在debug中如果输入y，chunk 为"y"  typeof 为string chunk=='y' 为false 
-
-
-                    搞不明白！！
-                */
-                process.exit();
+                if(g[0]==='y'){
+                    process.exit();
+                }else{
+                    stage = true;
+                    process.stdout.write('you can to do something \n');
+                }
             });
             process.stdin.on('end',function(){
                 process.stdout.write('end');

@@ -1,9 +1,14 @@
-var log = module.exports = {}
-
+var http = require('http');
 //日志类
 var GuiderLog = function(){
-    var self = this;
-    self.LOG = [];
+    this.log = [];
 }
-
-log.log = new GuiderLog();
+GuiderLog.prototype.append = function(key,message){
+	this.log.push({key:message});
+	console.log(key,' : ',message ,'\n');
+}
+GuiderLog.prototype.send = function(){
+	//发送成功之后，日志内存清空
+	this.log.length = 0;
+}
+module.exports = new GuiderLog();
