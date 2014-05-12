@@ -7,7 +7,6 @@ var net = require('net');
 var buffer = require('buffer');
 var crypto = require('crypto');
 var util = require('./util');
-var io = require('./io');
 var shell = require('./shell');
 var log = require('./GuiderLog');
 shell.exit();
@@ -122,7 +121,7 @@ Guider.prototype.HTTP = function(result){
     var handlerMemoryandfirstrequest = function(){
         //识别是否是第一次请求
         if(self.FIRSTREADCONTENT && !result.enforce && !(memoryManagement[__NAME__].index > 0)){
-            console.log('is FIRSTREADCONTENT : true');`
+            console.log('is FIRSTREADCONTENT : true');
             if(self.FIRSTREADCONTENT[__NAME__]){
                 console.log(self.FIRSTREADCONTENT[__NAME__].cachePhysical);
             }
@@ -571,5 +570,4 @@ glob.initialize = function(callback){
 glob.use = function(k,v){
     glob_config[k] = v;
 }
-glob.io = io;
 glob.util = util;
