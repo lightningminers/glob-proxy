@@ -25,39 +25,46 @@
 
 (windows 用户参考如下)	
     
-    var glob = require('glob-proxy');
-	glob.Config({
-	'PORT':'8084',
-	'REQUEST':{
-		'GET':{
-			'/github':'/mock.json'
+    var glob = require('./src/glob-proxy');
+
+	glob.use('PORT','8084');
+	glob.use('TYPE','HTTP');
+	glob.use('ROOT','E:\\localenv');
+	glob.use('REQUEST',{
+		"GET":{
+			"/github":"/mock.json",
+			"/under":"http://underscorejs.org/"
 		},
-		'POST':{
-			'/github':'/mock.json',
+		"POST":{
+			"/django":"http://xxxxxx"
 		}
-	},
-	'TYPE':'HTTP',
-	'ROOT':'D:\\Github'
-	});
+	})
+	glob.initialize();
 
 (Mac OSX 用户参考如下)
 
-	var glob = require('glob-proxy');
-	glob.Config({
-	'PORT':'8084',
-	'REQUEST':{
-		'GET':{
-			'/github':'/mock.json'
-		},
-		'POST':{
-			'/github':'/mock.json',
-		}
-	},
-	'TYPE':'HTTP',
-	'ROOT':'/User/wen/xxx'
-	});
+	var glob = require('./src/glob-proxy');
 
-运行node index.js, 在浏览器中访问 <http://127.0.0.1/github?local=1&mock=1&enforce=1>.
+
+	glob.use('PORT','8084');
+	glob.use('TYPE','HTTP');
+	glob.use('ROOT','/User/xxx');
+	glob.use('REQUEST',{
+		"GET":{
+			"/github":"/mock.json",
+			"/under":"http://underscorejs.org/"
+		},
+		"POST":{
+			"/django":"http://xxxxxx"
+		}
+	})
+	glob.initialize();
+
+运行node index.js, 在浏览器中访问 <http://127.0.0.1/github?local=1&mock=1&enforce=1>
+
+glob.use()  添加参数
+
+glob.initialize()  启动
 
 ## Client
 
