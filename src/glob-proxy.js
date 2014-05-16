@@ -31,6 +31,7 @@ var Guider = function(config){
         self.REQUEST = config.REQUEST;
         self.ROOT = config.ROOT || null;
         self.TYPE = config.TYPE || 'HTTP';
+        self.SENDWS = config.SENDWS;
     }
 
     self.WORKROOT = process.cwd();
@@ -156,8 +157,8 @@ Guider.prototype.HTTP = function(result){
         case 'GET':
             //对内存装载
             result.cache = Memory(result);
-            console.log('GET Param : ',result.search);
-            console.log('is cache : ',result.cache);
+            log.append('GET Param : ',result.search);
+            log.append('is cache : ',result.cache);
             var isStop = handlerMemoryandfirstrequest()
             if(isStop){
                 return;
@@ -174,8 +175,8 @@ Guider.prototype.HTTP = function(result){
                 result.body = data;
                 //对内存装载
                 result.cache = Memory(result);
-                console.log('POST Param : ',result.body);
-                console.log('is cache : ',result.cache);
+                log.append('POST Param : ',result.body);
+                log.append('is cache : ',result.cache);
                 var isStop = handlerMemoryandfirstrequest()
                 if(isStop){
                     return;
@@ -263,6 +264,8 @@ Guider.prototype.responseBody = function(body,result,firstRequestCode){
     }else{
         memory[__NAME__]['data'] = body;
     }
+    //WS提供给客户端或者其他服务端
+    this.SENDWS ? log.send(this.SENDWS) : log.clear();
     this.responseHeader();
     this.response.end(data||body);
 }
@@ -337,7 +340,7 @@ var server = {
             });
         }).on('error', function(e){
             ReadCacheContent.call(self,false);
-            console.log("Got error: " + e.message);
+            log.append("Got error: " + e.message);
         });
     },
     post:function(options){
@@ -377,7 +380,7 @@ var server = {
         });
         reque.on('error',function(e){
             ReadCacheContent.call(self,false);
-            console.log('problem with request :' + e.message);
+            log.append('problem with request :' + e.message);
         });
         reque.write(options.body);
         reque.end();
@@ -463,7 +466,7 @@ var ReadCacheContent = function(pon,cache){
         if(!key){
             return false;
         }
-        console.log('is read memory cache : true');
+        log.append('is read memory cache : true');
         self.responseBody(key['data']);
         return true;
     }
@@ -482,8 +485,8 @@ var ReadCacheContent = function(pon,cache){
         }
         if(!self.READCACHE){
             isReadFile(function(cacheconfig){
-                console.log('the last cache file time is ',cacheconfig.time);
-                console.log('is read rhysical file cache : true');
+                log.append('the last cache file time is ',cacheconfig.time);
+                log.append('is read rhysical file cache : true');
                 fs.readFile(cacheconfig.cachePhysical,function(err,data){
                     if(err) throw err;
                     var buf = new buffer.Buffer(data);
@@ -518,7 +521,7 @@ setInterval(function(){
             i++
             if(i > criticalPoint){
                 criticalPoint = false;
-                console.log('start memoryManagement delete');
+                log.append('start memoryManagement delete');
                 break;
             }
         }
@@ -541,11 +544,11 @@ setInterval(function(){
         for(var key in manage){
             delete memory[key];
             delete memoryManagement[key];
-            console.log('delete memory : ',key);
-            console.log('delete memoryManagement : ',key);
+            log.append('delete memory : ',key);
+            log.append('delete memoryManagement : ',key);
             if(query[key]){
                 delete query[key];
-                console.log('delete query : ',key);
+                log.append('delete query : ',key);
             }
         }
     }
