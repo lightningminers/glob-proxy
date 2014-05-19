@@ -1,7 +1,7 @@
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
-// var Mock = require("mockjs");
+var Mock = require("mockjs");
 var path = require('path');
 var net = require('net');
 var buffer = require('buffer');
@@ -9,6 +9,7 @@ var crypto = require('crypto');
 var util = require('./util');
 var shell = require('./shell');
 var log = require('./GuiderLog');
+var assert = require('assert');
 shell.exit();
 
 //内部变量 KEY
@@ -46,7 +47,6 @@ var Guider = function(config){
     *   常规HTTP请求配置：GET POST PUT DELETE | SOAP请求也配置在REQUEST中
     *   STATIC_DIR 配置静态资源服务器目标目录
     *   STATIC_DIR_CONFIG 配置静态服务器端口
-    *   MOCK 是否开启mock.js
     */
 
 
@@ -157,8 +157,8 @@ Guider.prototype.HTTP = function(result){
         case 'GET':
             //对内存装载
             result.cache = Memory(result);
-            log.append('GET Param : ',result.search);
-            log.append('is cache : ',result.cache);
+            log.append('GET Param',result.search);
+            log.append('is cache',result.cache);
             var isStop = handlerMemoryandfirstrequest()
             if(isStop){
                 return;
@@ -175,8 +175,8 @@ Guider.prototype.HTTP = function(result){
                 result.body = data;
                 //对内存装载
                 result.cache = Memory(result);
-                log.append('POST Param : ',result.body);
-                log.append('is cache : ',result.cache);
+                log.append('POST Param',result.body);
+                log.append('is cache',result.cache);
                 var isStop = handlerMemoryandfirstrequest()
                 if(isStop){
                     return;
@@ -485,8 +485,8 @@ var ReadCacheContent = function(pon,cache){
         }
         if(!self.READCACHE){
             isReadFile(function(cacheconfig){
-                log.append('the last cache file time is ',cacheconfig.time);
-                log.append('is read rhysical file cache : true');
+                log.append('the last cache file time is',cacheconfig.time);
+                log.append('is read rhysical file cache',true);
                 fs.readFile(cacheconfig.cachePhysical,function(err,data){
                     if(err) throw err;
                     var buf = new buffer.Buffer(data);

@@ -9,7 +9,7 @@ process.on('message',function(m,n){
 			var optionsParam = {
 				port:m.port || 80,
 				host:m.host,
-				path:m.pathname
+				path:m.pathname,
 				headers:{}
 			}
 		}catch(e){

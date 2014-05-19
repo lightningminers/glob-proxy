@@ -12,7 +12,10 @@ var GuiderLog = function(){
     this.log = [];
 }
 GuiderLog.prototype.append = function(key,message){
-	this.log.push({key:message});
+	var _key = {}
+	_key[key] = message;
+	this.log.push(_key);
+	// console.log('log : ',this.log)
 	console.log(key,' : ',message);
 }
 GuiderLog.prototype.send = function(_url){

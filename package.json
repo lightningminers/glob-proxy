@@ -1,8 +1,11 @@
 {
   "name": "glob-proxy",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "HTTP proxying",
   "main": "./src/glob-proxy.js",
+  "bin":{
+    "glob":"./bin/glob"
+  },
   "directories": {
     "test": "test"
   },

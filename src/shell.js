@@ -17,12 +17,14 @@ shell.exit = function(){
                 var chunk = chunk.toString().replace(/\n/,'');
                 var g = chunk.match(/\w+/);
                 process.stdin.pause();
-                if(g[0]==='y'){
-                    process.exit();
-                }else{
-                    stage = true;
-                    process.stdout.write('you can to do something \n');
+                if(g){
+                    if(g[0]==='y'){
+                        process.exit();
+                        return;
+                    } 
                 }
+                stage = true;
+                process.stdout.write('you can to do something \n');
             });
             process.stdin.on('end',function(){
                 process.stdout.write('end');
