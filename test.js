@@ -14,9 +14,7 @@ glob.use('REQUEST',{
 	}
 });
 glob.use('SENDWS','ws://wwxiang.vip.com')
+// glob.use('Mapping',{
+//	
+// });
 glob.initialize();
-
-
-
-
-

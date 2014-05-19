@@ -1,7 +1,7 @@
-var http = require('http');
+var net = require('net');
 var buf = require('buffer');
 var url = require('url');
-var child = require('child_process');
+var child = require('child_process').fork('./src/ws_handler');
 /**
 	web sockte 服务器与其他服务器或client交互
 
@@ -17,7 +17,12 @@ GuiderLog.prototype.append = function(key,message){
 }
 GuiderLog.prototype.send = function(_url){
 	var urlParse = url.parse(_url);
-	
+	var sendData = urlParse;
+	sendData.sendData = this.log;
+	/**
+		把数据传递给子进程去处理
+	*/
+	child.send(sendData);
 	//发送成功之后，日志内存清空
 	this.clear();
 }
