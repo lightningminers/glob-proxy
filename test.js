@@ -13,7 +13,7 @@ glob.use('REQUEST',{
 		"/django":"http://m.fat19.qa.nt.ctripcorp.com/restapi.cruises/CruiseService.svc/GetBookingInfo"
 	}
 });
-// glob.use('SENDWS','ws://wwxiang.vip.com')
+glob.use('SENDWS','ws://wwxiang.vip.com')
 // glob.use('Mapping',{
 //	
 // });
