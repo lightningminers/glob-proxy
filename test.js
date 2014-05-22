@@ -10,7 +10,7 @@ glob.use('REQUEST',{
 		"/under":"http://underscorejs.org/"
 	},
 	"POST":{
-		"/django":"http://m.fat19.qa.nt.ctripcorp.com/restapi.cruises/CruiseService.svc/GetBookingInfo"
+		"/django":"http://GetBookingInfo"
 	}
 });
 glob.use('SENDWS','ws://wwxiang.vip.com')
