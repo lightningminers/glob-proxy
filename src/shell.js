@@ -3,6 +3,8 @@ var crypto = require('crypto');
 var repl = require('repl');
 
 
+
+////写上注释 监听中断信号量
 var shell = module.exports = {}
 
 shell.exit = function(){
