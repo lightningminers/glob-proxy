@@ -79,6 +79,9 @@ var Guider = function(config){
     }
 }
 
+/**
+ *  启动代理服务
+ * */
 Guider.prototype.start = function(){
     var self = this;
     console.log('start server 127.0.0.1 : ',this.PORT);
@@ -94,6 +97,10 @@ Guider.prototype.start = function(){
             }
     }).listen(this.PORT);
 }
+
+/**
+ *  请求识别路由
+ * */
 Guider.prototype.handler = function(){
     var self = this,result;
     var parse = url.parse(this.request.url,true);
@@ -106,6 +113,10 @@ Guider.prototype.handler = function(){
     }
     return result;
 }
+
+/**
+ *  请求类型识别代理
+ * */
 Guider.prototype.proxy = function(result){
     switch(result.type){
         case 'HTTP':
@@ -116,6 +127,10 @@ Guider.prototype.proxy = function(result){
             break
     }
 }
+
+/**
+ *  处理类型为HTTP的请求
+ * */
 Guider.prototype.HTTP = function(result){
     var method = result.method;
     var self = this;
@@ -186,9 +201,17 @@ Guider.prototype.HTTP = function(result){
             break
     }
 }
+
+/**
+ *  处理类型为SOAP的请求
+ * */
 Guider.prototype.SOAP = function(result){
     //console.log(result);
 }
+
+/**
+ *  对请求参数进行序列化处理
+ * */
 Guider.prototype.requeParse = function(result,parse){
     var query,local = false,search = parse.search;
     if(search.length){
@@ -234,11 +257,19 @@ Guider.prototype.requeParse = function(result,parse){
         }
     }
 }
+
+/**
+ *  错误处理
+ * */
 Guider.prototype.error = function(){
     var response = this.response;
     this.responseHeader();
     this.responseBody('<h1>this request proxy to server is bad !! you need cache.json or your memory\'s data not empty !!!</h1>');
 }
+
+/**
+ *  处理成功的响应
+ * */
 Guider.prototype.responseHeader = function(){
     this.response.writeHead('200',{
         'Access-Control-Allow-Headers':'Content-Type, Accept',
@@ -247,6 +278,10 @@ Guider.prototype.responseHeader = function(){
         'Access-Control-Max-Age':30 * 24 * 3600
     });
 }
+
+/**
+ *  响应主体的处理
+ * */
 Guider.prototype.responseBody = function(body,result,firstRequestCode){
     var data;
     if(!firstRequestCode){
@@ -269,6 +304,10 @@ Guider.prototype.responseBody = function(body,result,firstRequestCode){
     this.responseHeader();
     this.response.end(data||body);
 }
+
+/**
+ *  处理静态文件
+ * */
 Guider.prototype.staticFileService = function(result){
     var self = this;
     if(!result.status){
