@@ -3,7 +3,7 @@ var glob = require('./src/glob-proxy');
 
 glob.use('PORT','8084');
 glob.use('TYPE','HTTP');
-glob.use('ROOT','E:\\django');
+glob.use('ROOT','/User/xiangwenwen/github/glob-proxy');
 glob.use('REQUEST',{
 	"GET":{
 		"/github":"/mock.json",
